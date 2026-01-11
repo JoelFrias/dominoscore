@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Domino Score</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #1a1a1a;
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 20px;
+        }
+
+        .header {
+            background: #2a2a2a;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-text {
+            background: linear-gradient(135deg, #4a9eff, #ff6b9d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .header-btn {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 8px;
+            transition: transform 0.2s, color 0.2s;
+        }
+
+        .header-btn:hover {
+            transform: scale(1.1);
+            color: #4a9eff;
+        }
+
+        .header-btn.reset {
+            color: #ff4444;
+        }
+
+        .header-btn.reset:hover {
+            color: #ff6666;
+        }
+
+        .target {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 20px;
+            font-size: 18px;
+        }
+
+        .star {
+            font-size: 32px;
+        }
+
+        .target-value {
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .score-display {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .score-box {
+            background: #2a2a2a;
+            border-radius: 15px;
+            padding: 30px 20px;
+            text-align: center;
+            border: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .score-box.winner {
+            border-color: #00ff00;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+        }
+
+        .score-label {
+            font-size: 18px;
+            margin-bottom: 10px;
+            opacity: 0.8;
+        }
+
+        .score-value {
+            font-size: 56px;
+            font-weight: bold;
+        }
+
+        .rounds-table {
+            background: #2a2a2a;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .table-header {
+            display: grid;
+            grid-template-columns: 60px 1fr 1fr;
+            gap: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #444;
+            margin-bottom: 10px;
+            font-weight: bold;
+            opacity: 0.7;
+            text-align: center;
+        }
+
+        .round-row {
+            display: grid;
+            grid-template-columns: 60px 1fr 1fr;
+            gap: 15px;
+            padding: 15px 0;
+            border-bottom: 1px solid #333;
+            align-items: center;
+        }
+
+        .round-row:last-child {
+            border-bottom: none;
+        }
+
+        .round-number {
+            color: #4a9eff;
+            font-weight: bold;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .delete-round {
+            background: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 8px;
+            cursor: pointer;
+            font-size: 12px;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .delete-round:hover {
+            opacity: 1;
+        }
+
+        .round-score {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .add-round-btn {
+            background: linear-gradient(135deg, #4a9eff, #357abd);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 20px;
+            width: 100%;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: transform 0.2s;
+        }
+
+        .add-round-btn:active {
+            transform: scale(0.98);
+        }
+
+        .swal2-popup {
+            background: #2a2a2a !important;
+            color: white !important;
+        }
+
+        .swal2-title {
+            color: white !important;
+        }
+
+        .swal2-html-container {
+            color: #ccc !important;
+        }
+
+        .swal2-input {
+            background: #1a1a1a !important;
+            border: 2px solid #444 !important;
+            color: white !important;
+        }
+
+        .swal2-input:focus {
+            border-color: #4a9eff !important;
+        }
+
+        .swal2-confirm {
+            background: linear-gradient(135deg, #4a9eff, #357abd) !important;
+        }
+
+        .swal2-cancel {
+            background: #444 !important;
+        }
+
+        @media (max-width: 480px) {
+            .score-value {
+                font-size: 48px;
+            }
+            
+            .round-score {
+                font-size: 20px;
+            }
+
+            .header-btn {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <i class="fas fa-gamepad"></i>
+            <span class="logo-text">DOMINO SCORE</span>
+        </div>
+        <div class="header-actions">
+            <button class="header-btn" onclick="openSettings()" title="Configuración">
+                <i class="fas fa-cog"></i>
+            </button>
+            <button class="header-btn reset" onclick="resetGame()" title="Reiniciar partida">
+                <i class="fas fa-redo"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="target">
+        <span class="star">⭐</span>
+        <span>Target:</span>
+        <span class="target-value" id="targetValue">200</span>
+    </div>
+
+    <div class="main-content">
+        <div class="score-display">
+            <div class="score-box" id="homeBox">
+                <div class="score-label">HOME</div>
+                <div class="score-value" id="homeScore">0</div>
+            </div>
+            <div class="score-box" id="visitorBox">
+                <div class="score-label">VISITOR</div>
+                <div class="score-value" id="visitorScore">0</div>
+            </div>
+        </div>
+
+        <div class="rounds-table">
+            <div class="table-header">
+                <div>#</div>
+                <div>HOME</div>
+                <div>VISITOR</div>
+            </div>
+            <div id="roundsList"></div>
+        </div>
+
+        <button class="add-round-btn" onclick="openAddRound()">
+            <i class="fas fa-plus-circle" style="font-size: 24px;"></i>
+            <span>Add Round</span>
+        </button>
+    </div>
+
+    <script>
+        // Game state stored in memory
+        let gameState = {
+            target: 200,
+            rounds: [],
+            homeTotal: 0,
+            visitorTotal: 0
+        };
+
+        // Initialize game
+        function initGame() {
+            updateDisplay();
+        }
+
+        // Update all display elements
+        function updateDisplay() {
+            document.getElementById('targetValue').textContent = gameState.target;
+            document.getElementById('homeScore').textContent = gameState.homeTotal;
+            document.getElementById('visitorScore').textContent = gameState.visitorTotal;
+            
+            // Update winner highlight
+            const homeBox = document.getElementById('homeBox');
+            const visitorBox = document.getElementById('visitorBox');
+            homeBox.classList.remove('winner');
+            visitorBox.classList.remove('winner');
+            
+            if (gameState.homeTotal >= gameState.target) {
+                homeBox.classList.add('winner');
+            }
+            if (gameState.visitorTotal >= gameState.target) {
+                visitorBox.classList.add('winner');
+            }
+            
+            // Update rounds list
+            const roundsList = document.getElementById('roundsList');
+            roundsList.innerHTML = '';
+            
+            gameState.rounds.forEach((round, index) => {
+                const roundRow = document.createElement('div');
+                roundRow.className = 'round-row';
+                roundRow.innerHTML = `
+                    <div class="round-number">
+                        ${index + 1}
+                        <button class="delete-round" onclick="deleteRound(${index})">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="round-score">${round.home}</div>
+                    <div class="round-score">${round.visitor}</div>
+                `;
+                roundsList.appendChild(roundRow);
+            });
+        }
+
+        // Calculate totals
+        function calculateTotals() {
+            gameState.homeTotal = gameState.rounds.reduce((sum, round) => sum + round.home, 0);
+            gameState.visitorTotal = gameState.rounds.reduce((sum, round) => sum + round.visitor, 0);
+        }
+
+        // Open add round modal
+        async function openAddRound() {
+            const { value: formValues } = await Swal.fire({
+                title: '<i class="fas fa-plus-circle"></i> Add Round',
+                html:
+                    '<label style="display: block; margin-bottom: 10px; color: #ccc;">HOME Score</label>' +
+                    '<input id="swal-input1" class="swal2-input" type="number" min="0" style="margin-top: 0;">' +
+                    '<label style="display: block; margin-bottom: 10px; margin-top: 20px; color: #ccc;">VISITOR Score</label>' +
+                    '<input id="swal-input2" class="swal2-input" type="number" min="0" style="margin-top: 0;">',
+                focusConfirm: false,
+                showCancelButton: true,
+                confirmButtonText: '<i class="fas fa-save"></i> Save',
+                cancelButtonText: '<i class="fas fa-times"></i> Cancel',
+                preConfirm: () => {
+                    return [
+                        parseInt(document.getElementById('swal-input1').value) || 0,
+                        parseInt(document.getElementById('swal-input2').value) || 0
+                    ]
+                }
+            });
+
+            if (formValues) {
+                gameState.rounds.push({
+                    home: formValues[0],
+                    visitor: formValues[1]
+                });
+                
+                calculateTotals();
+                updateDisplay();
+            }
+        }
+
+        // Delete round
+        async function deleteRound(index) {
+            const result = await Swal.fire({
+                title: '¿Eliminar este round?',
+                text: "Esta acción no se puede deshacer",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: '<i class="fas fa-trash"></i> Eliminar',
+                cancelButtonText: '<i class="fas fa-times"></i> Cancelar',
+                confirmButtonColor: '#ff4444',
+                cancelButtonColor: '#444'
+            });
+
+            if (result.isConfirmed) {
+                gameState.rounds.splice(index, 1);
+                calculateTotals();
+                updateDisplay();
+            }
+        }
+
+        // Open settings
+        async function openSettings() {
+            const { value: newTarget } = await Swal.fire({
+                title: '<i class="fas fa-cog"></i> Configuración',
+                html:
+                    '<label style="display: block; margin-bottom: 10px; color: #ccc;">Target Score</label>' +
+                    `<input id="swal-target" class="swal2-input" type="number" value="${gameState.target}" min="50" step="50" style="margin-top: 0;">`,
+                focusConfirm: false,
+                showCancelButton: true,
+                confirmButtonText: '<i class="fas fa-save"></i> Guardar',
+                cancelButtonText: '<i class="fas fa-times"></i> Cancelar',
+                preConfirm: () => {
+                    return parseInt(document.getElementById('swal-target').value) || 200;
+                }
+            });
+
+            if (newTarget) {
+                gameState.target = newTarget;
+                updateDisplay();
+            }
+        }
+
+        // Reset game
+        async function resetGame() {
+            const result = await Swal.fire({
+                title: '¿Reiniciar la partida?',
+                text: "Se perderán todos los rounds guardados",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: '<i class="fas fa-redo"></i> Reiniciar',
+                cancelButtonText: '<i class="fas fa-times"></i> Cancelar',
+                confirmButtonColor: '#ff4444',
+                cancelButtonColor: '#444'
+            });
+
+            if (result.isConfirmed) {
+                gameState = {
+                    target: gameState.target,
+                    rounds: [],
+                    homeTotal: 0,
+                    visitorTotal: 0
+                };
+                updateDisplay();
+            }
+        }
+
+        // Initialize on load
+        initGame();
+    </script>
+</body>
+</html>
