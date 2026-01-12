@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Domino Score</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎲</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
@@ -118,6 +119,16 @@
         .score-box.winner {
             border-color: #00ff00;
             box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+            }
+            50% {
+                box-shadow: 0 0 30px rgba(0, 255, 0, 0.6);
+            }
         }
 
         .score-label {
@@ -258,6 +269,10 @@
             .header-btn {
                 font-size: 18px;
             }
+
+            .score-label {
+                font-size: 16px;
+            }
         }
     </style>
 </head>
@@ -286,11 +301,11 @@
     <div class="main-content">
         <div class="score-display">
             <div class="score-box" id="homeBox">
-                <div class="score-label">HOME</div>
+                <div class="score-label" id="homeLabel">HOME</div>
                 <div class="score-value" id="homeScore">0</div>
             </div>
             <div class="score-box" id="visitorBox">
-                <div class="score-label">VISITOR</div>
+                <div class="score-label" id="visitorLabel">VISITOR</div>
                 <div class="score-value" id="visitorScore">0</div>
             </div>
         </div>
@@ -298,8 +313,8 @@
         <div class="rounds-table">
             <div class="table-header">
                 <div>#</div>
-                <div>HOME</div>
-                <div>VISITOR</div>
+                <div id="homeHeaderLabel">HOME</div>
+                <div id="visitorHeaderLabel">VISITOR</div>
             </div>
             <div id="roundsList"></div>
         </div>
@@ -311,16 +326,42 @@
     </div>
 
     <script>
-        // Game state stored in memory
+        // Game state - ahora se guarda en memoria (en-memory storage)
         let gameState = {
             target: 200,
+            homeName: 'HOME',
+            visitorName: 'VISITOR',
             rounds: [],
             homeTotal: 0,
             visitorTotal: 0
         };
 
+        // Load game state from memory storage
+        function loadGameState() {
+            const savedState = {
+                target: parseInt(sessionStorage.getItem('domino_target')) || 200,
+                homeName: sessionStorage.getItem('domino_homeName') || 'HOME',
+                visitorName: sessionStorage.getItem('domino_visitorName') || 'VISITOR',
+                rounds: JSON.parse(sessionStorage.getItem('domino_rounds') || '[]'),
+                homeTotal: 0,
+                visitorTotal: 0
+            };
+            
+            gameState = savedState;
+            calculateTotals();
+        }
+
+        // Save game state to memory storage
+        function saveGameState() {
+            sessionStorage.setItem('domino_target', gameState.target);
+            sessionStorage.setItem('domino_homeName', gameState.homeName);
+            sessionStorage.setItem('domino_visitorName', gameState.visitorName);
+            sessionStorage.setItem('domino_rounds', JSON.stringify(gameState.rounds));
+        }
+
         // Initialize game
         function initGame() {
+            loadGameState();
             updateDisplay();
         }
 
@@ -329,6 +370,10 @@
             document.getElementById('targetValue').textContent = gameState.target;
             document.getElementById('homeScore').textContent = gameState.homeTotal;
             document.getElementById('visitorScore').textContent = gameState.visitorTotal;
+            document.getElementById('homeLabel').textContent = gameState.homeName;
+            document.getElementById('visitorLabel').textContent = gameState.visitorName;
+            document.getElementById('homeHeaderLabel').textContent = gameState.homeName;
+            document.getElementById('visitorHeaderLabel').textContent = gameState.visitorName;
             
             // Update winner highlight
             const homeBox = document.getElementById('homeBox');
@@ -370,24 +415,75 @@
             gameState.visitorTotal = gameState.rounds.reduce((sum, round) => sum + round.visitor, 0);
         }
 
+        // Check for winner
+        async function checkWinner() {
+            let winner = null;
+            let winnerName = '';
+
+            if (gameState.homeTotal >= gameState.target && gameState.visitorTotal >= gameState.target) {
+                // Ambos llegaron, gana el que tenga más puntos
+                if (gameState.homeTotal > gameState.visitorTotal) {
+                    winner = 'home';
+                    winnerName = gameState.homeName;
+                } else if (gameState.visitorTotal > gameState.homeTotal) {
+                    winner = 'visitor';
+                    winnerName = gameState.visitorName;
+                } else {
+                    winnerName = 'EMPATE';
+                }
+            } else if (gameState.homeTotal >= gameState.target) {
+                winner = 'home';
+                winnerName = gameState.homeName;
+            } else if (gameState.visitorTotal >= gameState.target) {
+                winner = 'visitor';
+                winnerName = gameState.visitorName;
+            }
+
+            if (winner || winnerName === 'EMPATE') {
+                const result = await Swal.fire({
+                    title: winnerName === 'EMPATE' ? '🤝 EMPATE!' : `🏆 ${winnerName} GANA!`,
+                    html: winnerName === 'EMPATE' 
+                        ? `<p style="font-size: 24px; margin: 20px 0;">Ambos equipos: ${gameState.target} puntos</p>`
+                        : `<p style="font-size: 24px; margin: 20px 0;">Score final: ${winner === 'home' ? gameState.homeTotal : gameState.visitorTotal} puntos</p>`,
+                    icon: 'success',
+                    confirmButtonText: '<i class="fas fa-redo"></i> Nueva Partida',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false
+                });
+
+                if (result.isConfirmed) {
+                    gameState.rounds = [];
+                    gameState.homeTotal = 0;
+                    gameState.visitorTotal = 0;
+                    saveGameState();
+                    updateDisplay();
+                }
+            }
+        }
+
         // Open add round modal
         async function openAddRound() {
             const { value: formValues } = await Swal.fire({
                 title: '<i class="fas fa-plus-circle"></i> Add Round',
                 html:
-                    '<label style="display: block; margin-bottom: 10px; color: #ccc;">HOME Score</label>' +
+                    `<label style="display: block; margin-bottom: 10px; color: #ccc;">${gameState.homeName} Score</label>` +
                     '<input id="swal-input1" class="swal2-input" type="number" min="0" style="margin-top: 0;">' +
-                    '<label style="display: block; margin-bottom: 10px; margin-top: 20px; color: #ccc;">VISITOR Score</label>' +
+                    `<label style="display: block; margin-bottom: 10px; margin-top: 20px; color: #ccc;">${gameState.visitorName} Score</label>` +
                     '<input id="swal-input2" class="swal2-input" type="number" min="0" style="margin-top: 0;">',
                 focusConfirm: false,
                 showCancelButton: true,
                 confirmButtonText: '<i class="fas fa-save"></i> Save',
                 cancelButtonText: '<i class="fas fa-times"></i> Cancel',
                 preConfirm: () => {
-                    return [
-                        parseInt(document.getElementById('swal-input1').value) || 0,
-                        parseInt(document.getElementById('swal-input2').value) || 0
-                    ]
+                    const home = parseInt(document.getElementById('swal-input1').value) || 0;
+                    const visitor = parseInt(document.getElementById('swal-input2').value) || 0;
+                    
+                    if (home === 0 && visitor === 0) {
+                        Swal.showValidationMessage('Debes agregar puntos a al menos un equipo');
+                        return false;
+                    }
+                    
+                    return [home, visitor];
                 }
             });
 
@@ -398,7 +494,11 @@
                 });
                 
                 calculateTotals();
+                saveGameState();
                 updateDisplay();
+
+                // Verificar ganador después de actualizar
+                await checkWinner();
             }
         }
 
@@ -418,28 +518,49 @@
             if (result.isConfirmed) {
                 gameState.rounds.splice(index, 1);
                 calculateTotals();
+                saveGameState();
                 updateDisplay();
             }
         }
 
         // Open settings
         async function openSettings() {
-            const { value: newTarget } = await Swal.fire({
+            const { value: formValues } = await Swal.fire({
                 title: '<i class="fas fa-cog"></i> Configuración',
                 html:
-                    '<label style="display: block; margin-bottom: 10px; color: #ccc;">Target Score</label>' +
+                    '<label style="display: block; margin-bottom: 10px; color: #ccc;">Nombre Equipo 1</label>' +
+                    `<input id="swal-home-name" class="swal2-input" type="text" value="${gameState.homeName}" style="margin-top: 0;">` +
+                    '<label style="display: block; margin-bottom: 10px; margin-top: 20px; color: #ccc;">Nombre Equipo 2</label>' +
+                    `<input id="swal-visitor-name" class="swal2-input" type="text" value="${gameState.visitorName}" style="margin-top: 0;">` +
+                    '<label style="display: block; margin-bottom: 10px; margin-top: 20px; color: #ccc;">Target Score</label>' +
                     `<input id="swal-target" class="swal2-input" type="number" value="${gameState.target}" min="50" step="50" style="margin-top: 0;">`,
                 focusConfirm: false,
                 showCancelButton: true,
                 confirmButtonText: '<i class="fas fa-save"></i> Guardar',
                 cancelButtonText: '<i class="fas fa-times"></i> Cancelar',
                 preConfirm: () => {
-                    return parseInt(document.getElementById('swal-target').value) || 200;
+                    const homeName = document.getElementById('swal-home-name').value.trim();
+                    const visitorName = document.getElementById('swal-visitor-name').value.trim();
+                    const target = parseInt(document.getElementById('swal-target').value) || 200;
+                    
+                    if (!homeName || !visitorName) {
+                        Swal.showValidationMessage('Los nombres de los equipos no pueden estar vacíos');
+                        return false;
+                    }
+                    
+                    return {
+                        homeName: homeName,
+                        visitorName: visitorName,
+                        target: target
+                    };
                 }
             });
 
-            if (newTarget) {
-                gameState.target = newTarget;
+            if (formValues) {
+                gameState.homeName = formValues.homeName;
+                gameState.visitorName = formValues.visitorName;
+                gameState.target = formValues.target;
+                saveGameState();
                 updateDisplay();
             }
         }
@@ -458,12 +579,10 @@
             });
 
             if (result.isConfirmed) {
-                gameState = {
-                    target: gameState.target,
-                    rounds: [],
-                    homeTotal: 0,
-                    visitorTotal: 0
-                };
+                gameState.rounds = [];
+                gameState.homeTotal = 0;
+                gameState.visitorTotal = 0;
+                saveGameState();
                 updateDisplay();
             }
         }
