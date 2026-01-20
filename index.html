@@ -7,7 +7,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎲</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="header">
@@ -33,11 +33,11 @@
 
     <div class="main-content">
         <div class="score-display">
-            <div class="score-box" id="homeBox">
+            <div class="score-box" id="homeBox" onclick="quickAddScore('home')">
                 <div class="score-label" id="homeLabel">HOME</div>
                 <div class="score-value" id="homeScore">0</div>
             </div>
-            <div class="score-box" id="visitorBox">
+            <div class="score-box" id="visitorBox" onclick="quickAddScore('visitor')">
                 <div class="score-label" id="visitorLabel">VISITOR</div>
                 <div class="score-value" id="visitorScore">0</div>
             </div>
@@ -59,8 +59,6 @@
             <span>Add Round</span>
         </button>
     </div>
-
-    <script src="script.js"></script>
-
+    <script src="app.js"></script>
 </body>
 </html>

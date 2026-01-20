@@ -105,6 +105,17 @@ body {
     text-align: center;
     border: 3px solid transparent;
     transition: all 0.3s;
+    cursor: pointer;
+    user-select: none;
+}
+
+.score-box:hover {
+    background: #333;
+    transform: scale(1.02);
+}
+
+.score-box:active {
+    transform: scale(0.98);
 }
 
 .score-box.winner {

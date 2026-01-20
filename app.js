@@ -1,4 +1,3 @@
-//
 let gameState = {
     target: 200,
     homeName: 'HOME',
@@ -11,10 +10,10 @@ let gameState = {
 // Load game state from memory storage
 function loadGameState() {
     const savedState = {
-        target: parseInt(sessionStorage.getItem('domino_target')) || 200,
-        homeName: sessionStorage.getItem('domino_homeName') || 'HOME',
-        visitorName: sessionStorage.getItem('domino_visitorName') || 'VISITOR',
-        rounds: JSON.parse(sessionStorage.getItem('domino_rounds') || '[]'),
+        target: parseInt(localStorage.getItem('domino_target')) || 200,
+        homeName: localStorage.getItem('domino_homeName') || 'HOME',
+        visitorName: localStorage.getItem('domino_visitorName') || 'VISITOR',
+        rounds: JSON.parse(localStorage.getItem('domino_rounds') || '[]'),
         homeTotal: 0,
         visitorTotal: 0
     };
@@ -25,10 +24,10 @@ function loadGameState() {
 
 // Save game state to memory storage
 function saveGameState() {
-    sessionStorage.setItem('domino_target', gameState.target);
-    sessionStorage.setItem('domino_homeName', gameState.homeName);
-    sessionStorage.setItem('domino_visitorName', gameState.visitorName);
-    sessionStorage.setItem('domino_rounds', JSON.stringify(gameState.rounds));
+    localStorage.setItem('domino_target', gameState.target);
+    localStorage.setItem('domino_homeName', gameState.homeName);
+    localStorage.setItem('domino_visitorName', gameState.visitorName);
+    localStorage.setItem('domino_rounds', JSON.stringify(gameState.rounds));
 }
 
 // Initialize game
@@ -139,6 +138,49 @@ async function checkWinner() {
             saveGameState();
             updateDisplay();
         }
+    }
+}
+
+// Quick add score to a specific team
+async function quickAddScore(team) {
+    const teamName = team === 'home' ? gameState.homeName : gameState.visitorName;
+    
+    const { value: score } = await Swal.fire({
+        title: `<i class="fas fa-plus-circle"></i> Agregar puntos a ${teamName}`,
+        html:
+            `<label style="display: block; margin-bottom: 10px; color: #ccc;">Puntos para ${teamName}</label>` +
+            '<input id="swal-quick-score" class="swal2-input" type="tel" min="0" style="margin-top: 0;">',
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonText: '<i class="fas fa-save"></i> Save',
+        cancelButtonText: '<i class="fas fa-times"></i> Cancel',
+        didOpen: () => {
+            document.getElementById('swal-quick-score').blur();
+        },
+        preConfirm: () => {
+            const points = parseInt(document.getElementById('swal-quick-score').value) || 0;
+            
+            if (points === 0) {
+                Swal.showValidationMessage('Debes agregar al menos 1 punto');
+                return false;
+            }
+            
+            return points;
+        }
+    });
+
+    if (score) {
+        gameState.rounds.push({
+            home: team === 'home' ? score : 0,
+            visitor: team === 'visitor' ? score : 0
+        });
+        
+        calculateTotals();
+        saveGameState();
+        updateDisplay();
+
+        // Verificar ganador después de actualizar
+        await checkWinner();
     }
 }
 
